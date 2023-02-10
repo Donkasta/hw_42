@@ -1,14 +1,20 @@
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class SwingChat {
+    private static final Map<Socket, User> userList = new HashMap<>();
+
     public static void handle(Socket socket) {
-        System.out.printf("Подключен клиент: %s%n", socket);
+        userList.put(socket, new User());
+        System.out.printf("Подключен клиент: %s%n", userList.containsKey(socket));
         // создадим объекты через которые будем читать
         // запросы от клиента и отправлять ответы
+
         try (socket;
              Scanner reader = getReader(socket);
              PrintWriter writer = getWriter(socket)) {
@@ -29,7 +35,7 @@ public class SwingChat {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.printf("Клиент отключен: %s%n", socket);
+        System.out.printf("Клиент отключен: %s%n", userList.containsKey(socket));
     }
 
     private static PrintWriter getWriter(Socket socket)
@@ -56,5 +62,11 @@ public class SwingChat {
         writer.write(response);
         writer.write(System.lineSeparator());
         writer.flush();
+    }
+
+    private static void printUserList() {
+        for (Map.Entry<Socket, User> kv : userList.entrySet()) {
+            System.out.println(kv.getValue());
+        }
     }
 }
