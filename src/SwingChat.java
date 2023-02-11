@@ -15,22 +15,48 @@ public class SwingChat {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.printf("Подключен клиент: %s%n", USER_LIST.get(socket).name);
+        System.out.printf("Подключен клиент: %s%n", USER_LIST.get(socket).getName());
         // создадим объекты через которые будем читать
         // запросы от клиента и отправлять ответы
 
         try (socket;
              Scanner reader = getReader(socket)
         ) {
-            sendEveryone(USER_LIST.get(socket).name + " присоеденился чату!", socket);
+            sendEveryone(USER_LIST.get(socket).getName() + " присоеденился чату!", socket);
             while (true) {
-                String message = USER_LIST.get(socket).name + ": " + reader.nextLine().trim().strip();
+                String message = reader.nextLine().strip();
+
                 if (isEmptyMsg(message) || isQuitMsg(message)) {
                     break;
                 } else if (message.contains("/list")) {
                     printUserList(socket);
+
+                } else if (message.contains("/name")) {
+                    String newName = message.replace("/name", "").strip();
+                    try {
+
+                        if (isEmptyMsg(newName) || newName.contains(" ")) {
+                            throw new NullPointerException();
+                        }
+                        for (Map.Entry<Socket, User> usernames : USER_LIST.entrySet()) {
+                            if (newName.contains(usernames.getValue().getName())) {
+                                throw new NullPointerException();
+                            }
+                        }
+
+                        sendToUser(socket, "Вы теперь известны как " + newName);
+                        sendEveryone("Пользователь" + USER_LIST.get(socket).getName() +
+                                        "теперь известен как " + newName,
+                                socket);
+                        changeName(socket, newName);
+
+                    } catch (NullPointerException e) {
+                        sendToUser(socket, "Имя не может пустым, с пробелами или" +
+                                " быть таким же как у другого пользователя.");
+                    }
+
                 } else {
-                    sendEveryone(message, socket);
+                    sendEveryone(USER_LIST.get(socket).getName() + ": " + message, socket);
                 }
             }
         } catch (
@@ -42,8 +68,8 @@ public class SwingChat {
                 IOException e) {
             e.printStackTrace();
         }
-        String fmt = USER_LIST.get(socket).name + " покинул чат.";
-        System.out.printf("%s" + fmt + "%n", USER_LIST.get(socket).name);
+        String fmt = USER_LIST.get(socket).getName() + " покинул чат.";
+        System.out.printf("%s" + fmt + "%n", USER_LIST.get(socket).getName());
         try {
             sendEveryone(fmt, socket);
         } catch (IOException e) {
@@ -74,19 +100,28 @@ public class SwingChat {
 
     private static void sendEveryone(String response, Socket socket) throws IOException {
         for (Map.Entry<Socket, User> writer : USER_LIST.entrySet()) {
-            if (socket != writer.getValue().socket) {
-                writer.getValue().writer.write(response);
-                writer.getValue().writer.write(System.lineSeparator());
-                writer.getValue().writer.flush();
+            if (socket != writer.getValue().getSocket()) {
+                writer.getValue().getWriter().write(response);
+                writer.getValue().getWriter().write(System.lineSeparator());
+                writer.getValue().getWriter().flush();
             }
         }
     }
 
     private static void printUserList(Socket socket) throws IOException {
         for (Map.Entry<Socket, User> kv : USER_LIST.entrySet()) {
-            USER_LIST.get(socket).writer.write(kv.getValue().name);
-            USER_LIST.get(socket).writer.write(System.lineSeparator());
-            USER_LIST.get(socket).writer.flush();
+            sendToUser(socket, kv.getValue().getName());
         }
+    }
+
+    private static void changeName(Socket socket, String newName) {
+//        USER_LIST.get(socket).setName(null);
+        USER_LIST.get(socket).setName(newName);
+    }
+
+    private static void sendToUser(Socket socket, String message) {
+        USER_LIST.get(socket).getWriter().write(message);
+        USER_LIST.get(socket).getWriter().write(System.lineSeparator());
+        USER_LIST.get(socket).getWriter().flush();
     }
 }
