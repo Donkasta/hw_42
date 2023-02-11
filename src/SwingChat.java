@@ -7,35 +7,50 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class SwingChat {
-    private static final Map<Socket, User> userList = new HashMap<>();
+    private static final Map<Socket, User> USER_LIST = new HashMap<>();
 
     public static void handle(Socket socket) {
-        userList.put(socket, new User());
-        System.out.printf("Подключен клиент: %s%n", userList.containsKey(socket));
+        try {
+            USER_LIST.put(socket, new User(socket, getWriter(socket)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.printf("Подключен клиент: %s%n", USER_LIST.get(socket).name);
         // создадим объекты через которые будем читать
         // запросы от клиента и отправлять ответы
 
         try (socket;
-             Scanner reader = getReader(socket);
-             PrintWriter writer = getWriter(socket)) {
-            sendResponse("Привет " + socket, writer);
+             Scanner reader = getReader(socket)
+        ) {
+            sendEveryone(USER_LIST.get(socket).name + " присоеденился чату!", socket);
             while (true) {
-                String message = reader.nextLine();
+                String message = USER_LIST.get(socket).name + ": " + reader.nextLine().trim().strip();
                 if (isEmptyMsg(message) || isQuitMsg(message)) {
-
+                    break;
+                } else if (message.contains("/list")) {
+                    printUserList();
                     break;
                 }
                 // отправим ответ
-                sendResponse(message.toUpperCase(), writer);
+                sendEveryone(message, socket);
             }
-        } catch (NoSuchElementException ex) {
+        } catch (
+                NoSuchElementException ex) {
             // если scanner не сможет ничего прочитать из потока,
             // то будет исключение
             System.out.println("Клиент закрыл соединение!");
-        } catch (IOException e) {
+        } catch (
+                IOException e) {
             e.printStackTrace();
         }
-        System.out.printf("Клиент отключен: %s%n", userList.containsKey(socket));
+        String fmt = USER_LIST.get(socket).name + " покинул чат.";
+        System.out.printf("%s" + fmt + "%n", USER_LIST.get(socket).name);
+        try {
+            sendEveryone(fmt, socket);
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        USER_LIST.remove(socket);
     }
 
     private static PrintWriter getWriter(Socket socket)
@@ -58,15 +73,19 @@ public class SwingChat {
         return message == null || message.isBlank();
     }
 
-    private static void sendResponse(String response, Writer writer) throws IOException {
-        writer.write(response);
-        writer.write(System.lineSeparator());
-        writer.flush();
+    private static void sendEveryone(String response, Socket socket) throws IOException {
+        for (Map.Entry<Socket, User> writer : USER_LIST.entrySet()) {
+            if (socket != writer.getValue().socket) {
+                writer.getValue().writer.write(response);
+                writer.getValue().writer.write(System.lineSeparator());
+                writer.getValue().writer.flush();
+            }
+        }
     }
 
-    private static void printUserList() {
-        for (Map.Entry<Socket, User> kv : userList.entrySet()) {
-            System.out.println(kv.getValue());
+    private static void printUserList() throws IOException{
+        for (Map.Entry<Socket, User> kv : USER_LIST.entrySet()) {
+            sendEveryone(kv.getValue().name, kv.getValue().socket);
         }
     }
 }
