@@ -8,7 +8,7 @@ public class User {
     PrintWriter writer;
 
     public User(Socket socket, PrintWriter writer) {
-        this.name = "User" + UUID.randomUUID().toString().substring(9, 13).toUpperCase();
+        this.name = "User_" + UUID.randomUUID().toString().substring(9, 13).toUpperCase();
         this.socket = socket;
         this.writer = writer;
     }

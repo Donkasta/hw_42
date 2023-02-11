@@ -28,11 +28,10 @@ public class SwingChat {
                 if (isEmptyMsg(message) || isQuitMsg(message)) {
                     break;
                 } else if (message.contains("/list")) {
-                    printUserList();
-                    break;
+                    printUserList(socket);
+                } else {
+                    sendEveryone(message, socket);
                 }
-                // отправим ответ
-                sendEveryone(message, socket);
             }
         } catch (
                 NoSuchElementException ex) {
@@ -47,7 +46,7 @@ public class SwingChat {
         System.out.printf("%s" + fmt + "%n", USER_LIST.get(socket).name);
         try {
             sendEveryone(fmt, socket);
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
         USER_LIST.remove(socket);
@@ -83,9 +82,11 @@ public class SwingChat {
         }
     }
 
-    private static void printUserList() throws IOException{
+    private static void printUserList(Socket socket) throws IOException {
         for (Map.Entry<Socket, User> kv : USER_LIST.entrySet()) {
-            sendEveryone(kv.getValue().name, kv.getValue().socket);
+            USER_LIST.get(socket).writer.write(kv.getValue().name);
+            USER_LIST.get(socket).writer.write(System.lineSeparator());
+            USER_LIST.get(socket).writer.flush();
         }
     }
 }
