@@ -30,7 +30,6 @@ public class SwingChat {
                     break;
                 } else if (message.contains("/list")) {
                     printUserList(socket);
-
                 } else if (message.contains("/name")) {
                     String newName = message.replace("/name", "").strip();
                     try {
@@ -54,15 +53,23 @@ public class SwingChat {
                         sendToUser(socket, "Имя не может пустым, с пробелами или" +
                                 " быть таким же как у другого пользователя.");
                     }
+                } else if (message.contains("/whisper")) {
 
+                    String newMessage = message.replace("/whisper", "").strip();
+                    for (Map.Entry<Socket, User> username : USER_LIST.entrySet()) {
+                        if (newMessage.contains(username.getValue().getName())) {
+                            String updateMessage = newMessage.replace(
+                                    username.getValue().getName(), "").strip();
+                            sendToUser(username.getValue().getSocket(),
+                                    USER_LIST.get(socket).getName() + ": " + updateMessage);
+                        }
+                    }
                 } else {
                     sendEveryone(USER_LIST.get(socket).getName() + ": " + message, socket);
                 }
             }
         } catch (
                 NoSuchElementException ex) {
-            // если scanner не сможет ничего прочитать из потока,
-            // то будет исключение
             System.out.println("Клиент закрыл соединение!");
         } catch (
                 IOException e) {
@@ -115,7 +122,6 @@ public class SwingChat {
     }
 
     private static void changeName(Socket socket, String newName) {
-//        USER_LIST.get(socket).setName(null);
         USER_LIST.get(socket).setName(newName);
     }
 

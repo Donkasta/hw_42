@@ -4,8 +4,8 @@ import java.util.UUID;
 
 public class User {
     private String name;
-    private Socket socket;
-    private PrintWriter writer;
+    private final Socket socket;
+    private final PrintWriter writer;
 
     public User(Socket socket, PrintWriter writer) {
         this.name = "User_" + UUID.randomUUID().toString().substring(9, 13).toUpperCase();
