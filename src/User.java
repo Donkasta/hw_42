@@ -1,10 +1,16 @@
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.UUID;
 
 public class User {
     String name;
+    Socket socket;
+    PrintWriter writer;
 
-    public User() {
-        this.name = "User" + UUID.randomUUID().toString().substring(9,13).toUpperCase();
+    public User(Socket socket, PrintWriter writer) {
+        this.name = "User" + UUID.randomUUID().toString().substring(9, 13).toUpperCase();
+        this.socket = socket;
+        this.writer = writer;
     }
 
     public String getName() {
