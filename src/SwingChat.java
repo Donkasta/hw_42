@@ -20,7 +20,7 @@ public class SwingChat {
         try (socket;
              Scanner reader = getReader(socket)
         ) {
-            sendEveryone(USER_LIST.get(socket).getName() + " присоеденился чату!", socket);
+            sendEveryone(USER_LIST.get(socket).getName() + " присоеденился к чату!", socket);
             while (true) {
                 String message = reader.nextLine().strip();
 
@@ -45,8 +45,7 @@ public class SwingChat {
 
                         sendToUser(socket, "Вы теперь известны как " + newName);
                         sendEveryone("Пользователь " + USER_LIST.get(socket).getName() +
-                                        " теперь известен как " + newName,
-                                socket);
+                                " теперь известен как " + newName, socket);
                         changeName(socket, newName);
 
                     } catch (NullPointerException e) {
@@ -60,14 +59,14 @@ public class SwingChat {
 
                             for (Map.Entry<Socket, User> user : USER_LIST.entrySet()) {
                                 if (newMessage.contains(user.getValue().getName())) {
+
                                     String updateMessage = newMessage.replace(
                                             user.getValue().getName(), "").strip();
                                     sendToUser(user.getKey(), "(Личное сообщение) " +
                                             USER_LIST.get(socket).getName() + ": " + updateMessage);
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             throw new NullPointerException();
                         }
                     } catch (NullPointerException e) {
@@ -84,7 +83,7 @@ public class SwingChat {
         }
 
         String fmt = USER_LIST.get(socket).getName() + " покинул чат.";
-        System.out.printf("%s" + fmt + "%n", USER_LIST.get(socket).getName());
+        System.out.printf(fmt + "%n");
         try {
             sendEveryone(fmt, socket);
         } catch (
@@ -122,11 +121,6 @@ public class SwingChat {
             return USER_LIST.entrySet().stream()
                     .anyMatch(e -> e.getValue().getName().contains(username.strip()));
         } else return false;
-    }
-
-    private static boolean find(String newMessage) {
-        var username = USER_LIST.values().stream().limit(1).filter(e -> e.getName().contains(newMessage));
-        return username.anyMatch(e -> e.getName().contains(newMessage));
     }
 
     private static void sendEveryone(String response, Socket socket) throws IOException {
