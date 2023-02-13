@@ -25,6 +25,8 @@ public class EchoServer {
         } catch (IOException e) {
             System.out.printf("Вероятнее всего порт %s занят.%n", port);
             e.printStackTrace();
+        } catch (Exception ex){
+            ex.printStackTrace();
         }
     }
 }

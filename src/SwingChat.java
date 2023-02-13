@@ -32,49 +32,13 @@ public class SwingChat {
                 } else if (message.contains("/list")) {
                     printUserList(socket);
                 } else if (message.contains("/name")) {
-                    String newName = message.replace("/name", "").strip();
-                    try {
-                        if (isEmptyMsg(newName) || newName.contains(" ")) {
-                            throw new NullPointerException();
-                        }
-                        for (Map.Entry<Socket, User> usernames : USER_LIST.entrySet()) {
-                            if (newName.contains(usernames.getValue().getName())) {
-                                throw new NullPointerException();
-                            }
-                        }
-
-                        sendToUser(socket, "Вы теперь известны как " + newName);
-                        sendEveryone("Пользователь " + USER_LIST.get(socket).getName() +
-                                " теперь известен как " + newName, socket);
-                        changeName(socket, newName);
-
-                    } catch (NullPointerException e) {
-                        sendToUser(socket, "Имя не может пустым, с пробелами или" +
-                                " быть таким же \nкак у другого пользователя.");
-                    }
+                    changeName(socket, message);
                 } else if (message.contains("/whisper")) {
-                    String newMessage = message.replace("/whisper", "").strip();
-                    try {
-                        if (findUser(newMessage.strip())) {
-
-                            for (Map.Entry<Socket, User> user : USER_LIST.entrySet()) {
-                                if (newMessage.contains(user.getValue().getName())) {
-
-                                    String updateMessage = newMessage.replace(
-                                            user.getValue().getName(), "").strip();
-                                    sendToUser(user.getKey(), "(Личное сообщение) " +
-                                            USER_LIST.get(socket).getName() + ": " + updateMessage);
-                                }
-                            }
-                        } else {
-                            throw new NullPointerException();
-                        }
-                    } catch (NullPointerException e) {
-                        sendToUser(socket, "Пустое сообщение или пользователь не найден.");
-                    }
+                    sendWhisper(socket, message);
                 } else {
                     sendEveryone("(Всем) " + USER_LIST.get(socket).getName() + ": " + message, socket);
                 }
+
             }
         } catch (NoSuchElementException ex) {
             System.out.println("Клиент закрыл соединение!");
@@ -139,13 +103,59 @@ public class SwingChat {
         }
     }
 
-    private static void changeName(Socket socket, String newName) {
-        USER_LIST.get(socket).setName(newName);
+    private static void changeName(Socket socket, String message) throws IOException {
+        String newName = message.replace("/name", "").strip();
+
+        try {
+            if (isEmptyMsg(newName) || newName.contains(" ")) {
+                throw new NullPointerException();
+            }
+
+            for (Map.Entry<Socket, User> usernames : USER_LIST.entrySet()) {
+                if (newName.contains(usernames.getValue().getName())) {
+                    throw new NullPointerException();
+                }
+            }
+
+            sendToUser(socket, "Вы теперь известны как " + newName);
+            sendEveryone("Пользователь " + USER_LIST.get(socket).getName() +
+                    " теперь известен как " + newName, socket);
+            USER_LIST.get(socket).setName(newName);
+
+        } catch (NullPointerException e) {
+            sendToUser(socket, "Имя не может быть пустым, с пробелами \nили" +
+                    " таким же как у другого пользователя.");
+        }
     }
 
     private static void sendToUser(Socket socket, String message) {
         USER_LIST.get(socket).getWriter().write(message);
         USER_LIST.get(socket).getWriter().write(System.lineSeparator());
         USER_LIST.get(socket).getWriter().flush();
+    }
+
+    private static void sendWhisper(Socket socket, String message) {
+        String newMessage = message.replace("/whisper", "").strip();
+        try {
+            if (findUser(newMessage.strip())) {
+                for (Map.Entry<Socket, User> user : USER_LIST.entrySet()) {
+                    if (newMessage.contains(user.getValue().getName())) {
+
+                        String updateMessage = newMessage.replace(
+                                user.getValue().getName(), "").strip();
+                        sendToUser(user.getKey(), "(Личное сообщение) " +
+                                USER_LIST.get(socket).getName() + ": " + updateMessage);
+
+                    }
+                }
+            } else {
+                throw new NullPointerException();
+            }
+        } catch (NullPointerException e) {
+            sendToUser(socket, "Пустое сообщение или пользователь не найден.");
+        } catch (Exception ex){
+            System.out.println("Что-то пошло не так");
+            ex.printStackTrace();
+        }
     }
 }
